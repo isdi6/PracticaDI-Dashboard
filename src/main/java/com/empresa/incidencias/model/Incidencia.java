@@ -2,7 +2,9 @@ package com.empresa.incidencias.model;
 
 import javafx.beans.property.*;
 
+// clase modelo basica para guardar los datos de cada incidencia en memoria
 public class Incidencia {
+    // usamos las propiedades de javafx (StringProperty e IntegerProperty) para que la tabla las pueda leer bien
     private final IntegerProperty id;
     private final StringProperty titulo;
     private final StringProperty descripcion;
@@ -20,6 +22,8 @@ public class Incidencia {
     public int getId() { return id.get(); }
     public void setId(int id) { this.id.set(id); }
     public IntegerProperty idProperty() { return id; }
+    
+    // esto lo buscamos en internet para que el id salga formateado con dos numeros tipo 01, 02...
     public String getIdFormatted() { return String.format("%02d", id.get()); }
 
     public String getTitulo() { return titulo.get(); }

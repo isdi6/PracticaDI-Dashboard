@@ -27,23 +27,22 @@ public class App extends Application {
     private TextField searchField;
     private String currentStatusFilter = "Todos";
 
-    // Form controls
+    // Controles del formulario de la derecha
     private Label detailTitleLabel;
     private TextField titleField;
     private TextArea descArea;
     private ComboBox<String> statusCombo;
     private ComboBox<String> priorityCombo;
     private Button deleteBtn;
-    private Button saveBtn;
 
-    // Stat labels
+    // Etiquetas para los contadores de abajo (pie de pagina)
     private Label totalCountLabel;
     private Label abiertasCountLabel;
     private Label enProcesoCountLabel;
     private Label resueltasCountLabel;
     private Label statusMessageLabel;
 
-    // Filter buttons
+    // Lista para guardar los botones de filtro por estado
     private final List<Button> filterButtons = new ArrayList<>();
 
     private Incidencia selectedIncidencia = null;
@@ -51,17 +50,19 @@ public class App extends Application {
 
     @Override
     public void start(Stage stage) {
+        // Cargamos los datos de prueba en la lista
         initData();
 
+        // Layout principal con BorderPane
         BorderPane mainLayout = new BorderPane();
         mainLayout.getStyleClass().add("root-container");
 
-        // Top content (Header + Filters)
+        // Parte de arriba con titulo, buscador y botones de filtro
         VBox topBox = new VBox(16);
         topBox.getChildren().addAll(createHeader(), createFilterBar());
         mainLayout.setTop(topBox);
 
-        // Center content (Two cards: Table and Details)
+        // Parte central: a la izquierda la tabla y a la derecha el formulario
         HBox centerBox = new HBox(20);
         centerBox.setPadding(new Insets(16, 0, 16, 0));
         VBox.setVgrow(centerBox, Priority.ALWAYS);
@@ -69,6 +70,7 @@ public class App extends Application {
         VBox leftCard = createTableCard();
         VBox rightCard = createDetailCard();
 
+        // Le decimos a la tarjeta de la tabla que ocupe todo el espacio sobrante
         HBox.setHgrow(leftCard, Priority.ALWAYS);
         rightCard.setPrefWidth(340);
         rightCard.setMinWidth(300);
@@ -77,13 +79,14 @@ public class App extends Application {
         centerBox.getChildren().addAll(leftCard, rightCard);
         mainLayout.setCenter(centerBox);
 
-        // Footer status bar
+        // Barra inferior con los contadores
         HBox footerBar = createFooter();
         
         BorderPane rootWrapper = new BorderPane();
         rootWrapper.setCenter(mainLayout);
         rootWrapper.setBottom(footerBar);
 
+        // Creamos la escena y le cargamos el css
         Scene scene = new Scene(rootWrapper, 1060, 680);
         String css = getClass().getResource("/com/empresa/incidencias/style.css").toExternalForm();
         scene.getStylesheets().add(css);
@@ -94,16 +97,18 @@ public class App extends Application {
         stage.setMinHeight(600);
         stage.show();
 
-        // Default selection: select item #02 (matching screenshot)
+        // Dejamos seleccionada la primera o segunda fila por defecto
         if (tableView.getItems().size() > 1) {
             tableView.getSelectionModel().select(1);
         } else if (!tableView.getItems().isEmpty()) {
             tableView.getSelectionModel().select(0);
         }
+        // Actualizamos los contadores de abajo (pie de pagina)
         updateStats();
     }
 
     private void initData() {
+        // esto lo hemos buscado en Gemini porque nos daba pereza inventarnos 24 incidencias a mano (Consulta 2 en docs/IA.md)
         // Total 24 tickets: 8 Abiertas, 6 En proceso, 10 Resueltas
         masterData.addAll(
             new Incidencia(1, "Falta de Tóner", "Impresora de la primera planta requiere recambio urgente.", "Abierta", "Alta"),
@@ -145,14 +150,15 @@ public class App extends Application {
         Region spacer1 = new Region();
         HBox.setHgrow(spacer1, Priority.ALWAYS);
 
-        // Search Field
+        // Campo de busqueda rapida
+        // esto lo sacamos de Gemini para filtrar mientras escribes en el buscador (Consulta 3 en docs/IA.md)
         searchField = new TextField();
         searchField.setPromptText("🔍  Buscar por ID, título, descripción...");
         searchField.getStyleClass().add("search-field");
         searchField.setPrefWidth(320);
         searchField.textProperty().addListener((obs, oldVal, newVal) -> applyFilter());
 
-        // New Ticket Button
+        // Boton para crear una nueva incidencia
         Button newBtn = new Button("+ Nueva Incidencia");
         newBtn.getStyleClass().add("primary-button");
         newBtn.setOnAction(e -> enterNewMode());
@@ -197,6 +203,7 @@ public class App extends Application {
     }
 
     private void updateFilterButtonsUI(Button activeBtn) {
+        // esto lo buscamos en Gemini porque no sabiamos como hacer para que los botones de filtro cambien de estilo al pinchar
         for (Button btn : filterButtons) {
             btn.getStyleClass().removeAll("filter-btn-active", "filter-btn-inactive");
             if (btn == activeBtn) {
@@ -208,6 +215,7 @@ public class App extends Application {
     }
 
     private void resetFilters() {
+        // boton de limpiar filtros para dejarlo todo como al principio
         searchField.setText("");
         currentStatusFilter = "Todos";
         if (!filterButtons.isEmpty()) {
@@ -217,10 +225,11 @@ public class App extends Application {
     }
 
     private void applyFilter() {
+        // esto nos ayudo Gemini a montarlo con un predicado compuesto para que no pete si esta vacio (Consulta 3 en docs/IA.md)
         String searchText = searchField.getText() == null ? "" : searchField.getText().trim().toLowerCase();
 
         filteredData.setPredicate(incidencia -> {
-            // Status check
+            // comprobamos el estado seleccionado
             if (!currentStatusFilter.equals("Todos")) {
                 String filterNormalized = currentStatusFilter.equals("Abiertas") ? "Abierta" :
                                          currentStatusFilter.equals("Resueltas") ? "Resuelta" : currentStatusFilter;
@@ -229,7 +238,7 @@ public class App extends Application {
                 }
             }
 
-            // Search text check
+            // comprobamos si coincide el texto que escribe el usuario
             if (!searchText.isEmpty()) {
                 boolean matchesId = incidencia.getIdFormatted().contains(searchText) || 
                                     String.valueOf(incidencia.getId()).contains(searchText);
@@ -241,6 +250,7 @@ public class App extends Application {
             return true;
         });
 
+        // volvemos a contar los numeritos de abajo
         updateStats();
     }
 
@@ -256,7 +266,7 @@ public class App extends Application {
         tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         VBox.setVgrow(tableView, Priority.ALWAYS);
 
-        // Column ID
+        // Columna del ID
         TableColumn<Incidencia, String> colId = new TableColumn<>("ID");
         colId.setCellValueFactory(data -> Bindings.createStringBinding(data.getValue()::getIdFormatted));
         colId.setMinWidth(60);
@@ -275,12 +285,13 @@ public class App extends Application {
             }
         });
 
-        // Column Título
+        // Columna del titulo
         TableColumn<Incidencia, String> colTitulo = new TableColumn<>("Título");
         colTitulo.setCellValueFactory(new PropertyValueFactory<>("titulo"));
         colTitulo.setMinWidth(150);
 
-        // Column Estado
+        // Columna del estado
+        // esto nos dio error y le pedimos a Gemini que nos dijera como pintar las celdas con colores tipo badge (Consulta 4 en docs/IA.md)
         TableColumn<Incidencia, String> colEstado = new TableColumn<>("Estado");
         colEstado.setCellValueFactory(new PropertyValueFactory<>("estado"));
         colEstado.setMinWidth(110);
@@ -312,7 +323,7 @@ public class App extends Application {
             }
         });
 
-        // Column Prioridad
+        // Columna de prioridad
         TableColumn<Incidencia, String> colPrioridad = new TableColumn<>("Prioridad");
         colPrioridad.setCellValueFactory(new PropertyValueFactory<>("prioridad"));
         colPrioridad.setMinWidth(100);
@@ -346,10 +357,12 @@ public class App extends Application {
 
         tableView.getColumns().addAll(List.of(colId, colTitulo, colEstado, colPrioridad));
 
+        // esto de ordenar la tabla con el comparator lo sacamos de StackOverflow y Gemini
         SortedList<Incidencia> sortedList = new SortedList<>(filteredData);
         sortedList.comparatorProperty().bind(tableView.comparatorProperty());
         tableView.setItems(sortedList);
 
+        // listener para cuando el usuario pincha en una fila cargar los datos a la derecha
         tableView.getSelectionModel().selectedItemProperty().addListener((obs, oldSel, newSel) -> {
             if (newSel != null) {
                 isNewMode = false;
@@ -369,7 +382,7 @@ public class App extends Application {
         detailTitleLabel = new Label("Detalle de Incidencia");
         detailTitleLabel.getStyleClass().add("card-title");
 
-        // Título field
+        // Campo para el titulo
         VBox titleBox = new VBox(6);
         Label titleLbl = new Label("Título");
         titleLbl.getStyleClass().add("form-label");
@@ -377,7 +390,7 @@ public class App extends Application {
         titleField.getStyleClass().add("custom-text-field");
         titleBox.getChildren().addAll(titleLbl, titleField);
 
-        // Descripción area
+        // Area para la descripcion
         VBox descBox = new VBox(6);
         Label descLbl = new Label("Descripción");
         descLbl.getStyleClass().add("form-label");
@@ -387,7 +400,7 @@ public class App extends Application {
         descArea.setPrefRowCount(4);
         descBox.getChildren().addAll(descLbl, descArea);
 
-        // Estado and Prioridad dropdowns
+        // Desplegables para estado y prioridad
         HBox combosBox = new HBox(12);
 
         VBox estadoBox = new VBox(6);
@@ -413,7 +426,7 @@ public class App extends Application {
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
 
-        // Action buttons
+        // Botones de accion para guardar y borrar
         HBox actionButtons = new HBox(10);
         actionButtons.setAlignment(Pos.CENTER_RIGHT);
 
@@ -421,7 +434,7 @@ public class App extends Application {
         deleteBtn.getStyleClass().add("secondary-button");
         deleteBtn.setOnAction(e -> deleteSelected());
 
-        saveBtn = new Button("Guardar cambios");
+        Button saveBtn = new Button("Guardar cambios");
         saveBtn.getStyleClass().add("primary-button");
         saveBtn.setOnAction(e -> saveChanges());
 
@@ -446,6 +459,7 @@ public class App extends Application {
     }
 
     private void enterNewMode() {
+        // modo para meter una incidencia nueva, limpiamos los campos
         isNewMode = true;
         selectedIncidencia = null;
         tableView.getSelectionModel().clearSelection();
@@ -455,33 +469,37 @@ public class App extends Application {
         descArea.setText("");
         statusCombo.setValue("Abierta");
         priorityCombo.setValue("Media");
-        deleteBtn.setDisable(true);
+        deleteBtn.setDisable(true); // deshabilitamos el boton de borrar porque aun no existe
         titleField.requestFocus();
     }
 
     private void saveChanges() {
+        // recogemos los datos del formulario a mano
         String title = titleField.getText().trim();
         String desc = descArea.getText().trim();
         String status = statusCombo.getValue();
         String priority = priorityCombo.getValue();
 
+        // comprobamos que el titulo no este vacio para que no metan cosas raras
         if (title.isEmpty()) {
             showAlert("Validación", "Por favor introduce un título para la incidencia.");
             return;
         }
 
         if (isNewMode) {
+            // esto lo buscamos en Gemini para sacar el id mas alto y sumarle uno (Consulta 5 en docs/IA.md)
             int nextId = masterData.stream().mapToInt(Incidencia::getId).max().orElse(0) + 1;
             Incidencia newInc = new Incidencia(nextId, title, desc, status != null ? status : "Abierta", priority != null ? priority : "Media");
             masterData.add(newInc);
             tableView.getSelectionModel().select(newInc);
             statusMessageLabel.setText("✓ Incidencia #" + newInc.getIdFormatted() + " creada correctamente");
         } else if (selectedIncidencia != null) {
+            // modificamos la incidencia que estaba seleccionada
             selectedIncidencia.setTitulo(title);
             selectedIncidencia.setDescripcion(desc);
             if (status != null) selectedIncidencia.setEstado(status);
             if (priority != null) selectedIncidencia.setPrioridad(priority);
-            tableView.refresh();
+            tableView.refresh(); // refrescamos la tabla para que se vean los cambios
             statusMessageLabel.setText("✓ Cambios guardados para la incidencia #" + selectedIncidencia.getIdFormatted());
         }
 
@@ -489,6 +507,7 @@ public class App extends Application {
     }
 
     private void deleteSelected() {
+        // si borras la incidencia la quitamos de la lista y seleccionamos la primera que quede para que no se quede en blanco
         if (selectedIncidencia != null) {
             String idFmt = selectedIncidencia.getIdFormatted();
             masterData.remove(selectedIncidencia);
@@ -546,11 +565,13 @@ public class App extends Application {
     }
 
     private void updateStats() {
+        // esto lo hemos sacado de Gemini con streams para contar cuantas hay de cada tipo (Consulta 5 en docs/IA.md)
         long total = masterData.size();
         long abiertas = masterData.stream().filter(i -> "Abierta".equalsIgnoreCase(i.getEstado())).count();
         long enProceso = masterData.stream().filter(i -> "En proceso".equalsIgnoreCase(i.getEstado())).count();
         long resueltas = masterData.stream().filter(i -> "Resuelta".equalsIgnoreCase(i.getEstado())).count();
 
+        // actualizamos las etiquetas con los valores nuevos
         if (totalCountLabel != null) totalCountLabel.setText(String.valueOf(total));
         if (abiertasCountLabel != null) abiertasCountLabel.setText(String.valueOf(abiertas));
         if (enProcesoCountLabel != null) enProcesoCountLabel.setText(String.valueOf(enProceso));
