@@ -2,7 +2,7 @@ Practica 1 - Dashboard de Incidencias
 Asignatura: Desarrollo de Interfaces
 Curso: 2º DAM
 
-Descripcion:
+Descripcón:
 Esta es la aplicacion para la practica de gestion de incidencias de una empresa. La hemos hecho con JavaFX y Maven usando Java 17/21.
 No tiene base de datos porque la practica decia que habia que meter los datos en memoria en un ArrayList/ObservableList al arrancar.
 
