@@ -382,51 +382,70 @@ public class App extends Application {
         detailTitleLabel = new Label("Detalle de Incidencia");
         detailTitleLabel.getStyleClass().add("card-title");
 
-        // Campo para el titulo
-        VBox titleBox = new VBox(6);
+        // --- GRIDPANE: Cuadrícula organizada del formulario ---
+        GridPane formGrid = new GridPane();
+        formGrid.setHgap(12); // Espacio entre columna izquierda y derecha
+        formGrid.setVgap(6);  // Espacio vertical entre label y campo
+
+        // Configuración para que las 2 columnas se repartan el 50% de ancho exacto
+        ColumnConstraints col1 = new ColumnConstraints();
+        col1.setPercentWidth(50);
+        ColumnConstraints col2 = new ColumnConstraints();
+        col2.setPercentWidth(50);
+        formGrid.getColumnConstraints().addAll(col1, col2);
+
+        // 1. Título
         Label titleLbl = new Label("Título");
         titleLbl.getStyleClass().add("form-label");
         titleField = new TextField();
         titleField.getStyleClass().add("custom-text-field");
-        titleBox.getChildren().addAll(titleLbl, titleField);
+        titleField.setMaxWidth(Double.MAX_VALUE);
 
-        // Area para la descripcion
-        VBox descBox = new VBox(6);
+        // 2. Descripción
         Label descLbl = new Label("Descripción");
         descLbl.getStyleClass().add("form-label");
+        GridPane.setMargin(descLbl, new Insets(8, 0, 0, 0)); // Separación superior
         descArea = new TextArea();
         descArea.getStyleClass().add("custom-text-area");
         descArea.setWrapText(true);
         descArea.setPrefRowCount(4);
-        descBox.getChildren().addAll(descLbl, descArea);
+        descArea.setMaxWidth(Double.MAX_VALUE);
 
-        // Desplegables para estado y prioridad
-        HBox combosBox = new HBox(12);
-
-        VBox estadoBox = new VBox(6);
+        // 3. Combos Estado y Prioridad
         Label estadoLbl = new Label("Estado");
         estadoLbl.getStyleClass().add("form-label");
+        GridPane.setMargin(estadoLbl, new Insets(8, 0, 0, 0));
         statusCombo = new ComboBox<>(FXCollections.observableArrayList("Abierta", "En proceso", "Resuelta"));
         statusCombo.getStyleClass().add("custom-combo-box");
         statusCombo.setMaxWidth(Double.MAX_VALUE);
-        HBox.setHgrow(estadoBox, Priority.ALWAYS);
-        estadoBox.getChildren().addAll(estadoLbl, statusCombo);
 
-        VBox priorityBox = new VBox(6);
         Label priorityLbl = new Label("Prioridad");
         priorityLbl.getStyleClass().add("form-label");
+        GridPane.setMargin(priorityLbl, new Insets(8, 0, 0, 0));
         priorityCombo = new ComboBox<>(FXCollections.observableArrayList("Baja", "Media", "Alta"));
         priorityCombo.getStyleClass().add("custom-combo-box");
         priorityCombo.setMaxWidth(Double.MAX_VALUE);
-        HBox.setHgrow(priorityBox, Priority.ALWAYS);
-        priorityBox.getChildren().addAll(priorityLbl, priorityCombo);
 
-        combosBox.getChildren().addAll(estadoBox, priorityBox);
+        // --- POSICIONAMIENTO EN GRID: add(Node, col, fila, colspan, rowspan) ---
+        // Título (ocupa las 2 columnas de ancho)
+        formGrid.add(titleLbl, 0, 0, 2, 1);
+        formGrid.add(titleField, 0, 1, 2, 1);
+
+        // Descripción (ocupa las 2 columnas de ancho)
+        formGrid.add(descLbl, 0, 2, 2, 1);
+        formGrid.add(descArea, 0, 3, 2, 1);
+
+        // Estado y Prioridad (cada uno ocupa 1 columna en la misma fila)
+        formGrid.add(estadoLbl, 0, 4);
+        formGrid.add(priorityLbl, 1, 4);
+        formGrid.add(statusCombo, 0, 5);
+        formGrid.add(priorityCombo, 1, 5);
+        // --- FIN GRIDPANE ---
 
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
 
-        // Botones de accion para guardar y borrar
+        // Botones de acción
         HBox actionButtons = new HBox(10);
         actionButtons.setAlignment(Pos.CENTER_RIGHT);
 
@@ -445,9 +464,11 @@ public class App extends Application {
 
         actionButtons.getChildren().addAll(deleteBtn, saveBtn);
 
-        card.getChildren().addAll(detailTitleLabel, titleBox, descBox, combosBox, spacer, actionButtons);
+        card.getChildren().addAll(detailTitleLabel, formGrid, spacer, actionButtons);
         return card;
     }
+
+
 
     private void populateForm(Incidencia inc) {
         detailTitleLabel.setText("Detalle de Incidencia #" + inc.getIdFormatted());
